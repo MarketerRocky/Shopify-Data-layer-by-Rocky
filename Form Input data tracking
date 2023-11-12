@@ -24,3 +24,7 @@ contactForm.addEventListener('submit', function () {
     window.dataLayer = window.dataLayer || [];
     dataLayer.push(inputValues);
 });
+
+
+
+Check the video if any problem - https://www.youtube.com/watch?v=WRtdtSGnCK4&t=182s
