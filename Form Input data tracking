@@ -1,0 +1,26 @@
+//form data code
+var contactForm = document.querySelector('#gform_2');
+var formData = new FormData(contactForm);
+var inputValues = {};
+
+formData.forEach(function (value, key) {
+    inputValues[key] = value;
+});
+console.log(inputValues);
+
+
+//dataLayer Code 
+var contactForm = document.querySelector('#your-form-id');
+contactForm.addEventListener('submit', function () {
+    var formData = new FormData(contactForm);
+    var inputValues = {
+        event: 'contact_form_submit'
+    };
+
+    formData.forEach(function (value, key) {
+        inputValues[key] = value;
+    });
+
+    window.dataLayer = window.dataLayer || [];
+    dataLayer.push(inputValues);
+});
