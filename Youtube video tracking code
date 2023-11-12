@@ -1,0 +1,121 @@
+(function () {
+    var videoProgress = [10, 25, 50, 75, 100];
+    var loadedIframes = [];
+    var intervalId;
+    window.dataLayer = window.dataLayer || [];
+
+    function handleIframe(iframe) {
+        if (/.+youtube.com\/embed.+/.test(iframe.src) && loadedIframes.indexOf(iframe) === -1) {
+            loadedIframes.push(iframe);
+            initializeVideoTracking(iframe);
+        }
+    }
+
+    function initializeVideoTracking(youtubeIframe) {
+        var videoUrl = youtubeIframe.src.split('?')[0];
+        var videoTitle = youtubeIframe.getAttribute('title');
+        var video_duration;
+        var lastReportedPercentage = -1;
+        var isVideoPlaying = false;
+
+        setTimeout(function() {
+            videoTitle = youtubeIframe.getAttribute('title');
+        }, 1000);
+
+        setTimeout(function() {
+            videoTitle = youtubeIframe.getAttribute('title');
+        }, 1500);
+
+        var youtubePlayer = new YT.Player(youtubeIframe, {
+            events: {
+                'onStateChange': onPlayerStateChange,
+                'onReady': onPlayerReady,
+            }
+        });
+
+        function onPlayerReady(event) {
+            video_duration = youtubePlayer.getDuration();
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data == YT.PlayerState.PLAYING && !isVideoPlaying) {
+                dataLayer.push({
+                    event: 'video_start',
+                    video_duration: video_duration,
+                    video_provider: 'youtube',
+                    video_current_time: 0,
+                    video_percent: 0,
+                    video_title: videoTitle,
+                    video_url: videoUrl,
+                    visible: true
+                });
+
+                isVideoPlaying = true;
+                lastReportedPercentage = -1; // Reset to ensure the first progress event is always sent
+                trackProgress();
+            } else if (event.data == YT.PlayerState.ENDED) {
+                dataLayer.push({
+                    event: 'video_complete',
+                    video_duration: video_duration,
+                    video_provider: 'youtube',
+                    video_current_time: video_duration,
+                    video_percent: 100,
+                    video_title: videoTitle,
+                    video_url: videoUrl,
+                    visible: true
+                });
+
+                clearInterval(intervalId);
+            }
+        }
+
+        function trackProgress() {
+            
+            intervalId = setInterval(function () {
+                var currentTime = youtubePlayer.getCurrentTime();
+                var progressPercentage = (currentTime / video_duration) * 100;
+                var roundedPercentage = Math.floor(progressPercentage);
+
+                // Check if the progress percentage has changed significantly (e.g., every 1%)
+                if (roundedPercentage !== lastReportedPercentage) {
+
+                    for(var i = 0; i < videoProgress.length; i++) {
+                        var progress = videoProgress[i];
+
+                        if(roundedPercentage === progress) {
+                            dataLayer.push({
+                                event: 'video_progress',
+                                video_duration: video_duration,
+                                video_provider: 'youtube',
+                                video_current_time: parseFloat(currentTime.toFixed(2)),
+                                video_percent: roundedPercentage,
+                                video_title: videoTitle,
+                                video_url: videoUrl,
+                                visible: true
+                            });
+                        }
+                    }
+
+                    lastReportedPercentage = roundedPercentage;
+                }
+            }, 1000);
+        }
+    }
+
+    // Create a MutationObserver to watch for iframe additions to the document
+    var observer = new MutationObserver(function (mutationsList) {
+        for (var mutationIndex = 0; mutationIndex < mutationsList.length; mutationIndex++) {
+            var mutation = mutationsList[mutationIndex];
+            if (mutation.type === 'childList') {
+                for (var nodeIndex = 0; nodeIndex < mutation.addedNodes.length; nodeIndex++) {
+                    var node = mutation.addedNodes[nodeIndex];
+                    if (node.tagName === 'IFRAME') {
+                        handleIframe(node);
+                    }
+                }
+            }
+        }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+})();
