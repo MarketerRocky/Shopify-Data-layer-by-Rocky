@@ -1,0 +1,28 @@
+
+// example affiliate link
+// https://leocoder-shop.myshopify.com?affiliate_id=rubel
+
+
+// set affiliate id
+var queryParts = new URLSearchParams(window.location.search);
+var affiliate_id = queryParts.get('affiliate_id');
+
+if(affiliate_id) {
+	localStorage.setItem('affiliateId', affiliate_id);
+}
+
+
+// collect affliate id
+localStorage.getItem('affiliateId');
+
+
+// remove affiliate id
+localStorage.removeItem('affiliateId');
+
+
+
+
+
+
+
+check the video if any problem - https://www.youtube.com/watch?v=MCGoBFOiJMM&t=2095s
